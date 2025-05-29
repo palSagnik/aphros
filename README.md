@@ -1,3 +1,2 @@
 # proglog
 
-## Some checks
