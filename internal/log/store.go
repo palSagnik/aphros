@@ -101,6 +101,10 @@ func (s *store) ReadAt(p []byte, off int64) (int, error) {
 	return s.File.ReadAt(p, off)
 }
 
+func (s *store) Name() string {
+	return s.File.Name()
+}
+
 func (s *store) Close() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
