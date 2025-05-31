@@ -99,6 +99,9 @@ func testReader(t *testing.T, log *Log) {
 	require.NoError(t, err)
 
 	read := &api.Record{}
+
+	// the entry returns -> length of data | data
+	// start our read after lengthWidth
 	err = proto.Unmarshal(b[lenWidth:], read)
 	require.NoError(t, err)
 	require.Equal(t, append.Value, read.Value)

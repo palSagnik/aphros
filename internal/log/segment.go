@@ -22,6 +22,13 @@ type segment struct {
 	config                 Config
 }
 
+// newSegment creates a new segment with the given directory, base offset, and configuration.
+// A segment consists of a store file and an index file, both named with the base offset.
+// The store file is opened with read-write, create, and append flags for storing log entries.
+// The index file is opened with read-write and create flags for fast lookups.
+// The function initializes the next offset by reading the last entry from the index,
+// or sets it to the base offset if the index is empty.
+// Returns a pointer to the created segment or an error if file operations fail.
 func newSegment(dir string, baseOffset uint64, c Config) (*segment, error) {
 	s := &segment{
 		baseOffset: baseOffset,
@@ -68,6 +75,11 @@ func newSegment(dir string, baseOffset uint64, c Config) (*segment, error) {
 	return s, nil
 }
 
+// Append adds a new record to the segment and returns the record's offset.
+// It assigns the current nextOffset to the record, marshals it using protobuf,
+// appends the marshaled data to the store, writes the offset-position mapping
+// to the index (using relative offset from baseOffset), and increments nextOffset.
+// Returns the assigned offset and any error encountered during the process.
 func (s *segment) Append(record *api.Record) (offset uint64, err error) {
 	curr := s.nextOffset
 	record.Offset = curr

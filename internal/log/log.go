@@ -13,6 +13,16 @@ import (
 	api "github.com/palSagnik/proglog/api/v1"
 )
 
+// This is the implementation of an Append only Log
+// A log contains many segments where each segment has a store and index
+// A store contains the messages, while index stores the offsets to the entries of store
+
+
+// Log represents a write-ahead log that manages multiple segments of log data.
+// It provides thread-safe operations for reading and writing log entries across
+// multiple segment files stored in a directory. The Log maintains an active
+// segment for writes and a collection of segments for reads, automatically
+// managing segment rotation based on the provided configuration.
 type Log struct {
 	mu            sync.RWMutex
 
@@ -52,6 +62,10 @@ func (l *Log) newSegment(off uint64) error {
 	return nil
 }
 
+// setup initializes the Log by reading existing segment files from the directory,
+// parsing their base offsets from filenames, sorting them in ascending order,
+// and creating segment objects for each. If no segments exist, it creates an
+// initial segment starting from the configured initial offset.
 func (l *Log) setup() error {
 	files, err := os.ReadDir(l.Dir)
 	if err != nil {
@@ -87,6 +101,10 @@ func (l *Log) setup() error {
 	return nil
 }
 
+// Append adds a record to the log and returns the offset where the record was stored.
+// It appends the record to the active segment and creates a new segment if the current
+// segment has reached its maximum capacity. The method is thread-safe and returns
+// the offset of the appended record or an error if the operation fails.
 func (l *Log) Append(record *api.Record) (uint64, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -103,6 +121,16 @@ func (l *Log) Append(record *api.Record) (uint64, error) {
 	return off, err
 }
 
+// Read retrieves a record from the log at the specified offset.
+// It searches through the log segments to find the one containing the given offset,
+// then reads the record from that segment.
+//
+// Returns: 
+// The record at the specified offset 
+// An error if the offset is out of range or the record cannot be read
+//
+// The method is thread-safe and uses a read lock to prevent concurrent modifications
+// while searching for and reading the record.
 func (l *Log) Read (off uint64) (*api.Record, error) {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
@@ -122,6 +150,10 @@ func (l *Log) Read (off uint64) (*api.Record, error) {
 	return s.Read(off)
 }	
 
+// Close closes the log and all its segments. It acquires a lock to ensure
+// thread-safe operation and iterates through all segments, closing each one.
+// If any segment fails to close, it returns the first error encountered.
+// Returns nil if all segments are successfully closed.
 func (l *Log) Close() error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -135,6 +167,10 @@ func (l *Log) Close() error {
 	return nil
 }
 
+// Remove closes the log and removes all files and directories associated with it.
+// It first attempts to close the log gracefully, and if successful, removes the
+// entire directory structure. Returns an error if either the close operation or
+// the removal fails.
 func (l *Log) Remove() error {
 	if err := l.Close(); err != nil {
 		return err
