@@ -79,6 +79,8 @@ func (i *index) Read(in int64) (out uint32, pos uint64, err error) {
 		return 0, 0, io.EOF
 	}
 
+	// in == -1 sets the last offset as out 
+	// else the current offset
 	if in == -1 {
 		out = uint32((i.size/entryWidth) - 1)
 	} else {
