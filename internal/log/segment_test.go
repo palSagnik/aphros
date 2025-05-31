@@ -14,23 +14,23 @@ func TestSegment(t *testing.T) {
 	defer os.RemoveAll(dir)
 
 	want := &api.Record{
-		Value: []byte("this is for segment testing"),
+		Value: []byte("hello world"),
 	}
 
-	factor := 4
+	
 	c := Config{}
 	c.Segment.MaxStoreBytes = 1024
-	c.Segment.MaxIndexBytes = entryWidth * uint64(factor)
+	c.Segment.MaxIndexBytes = entryWidth * 3
 
 	s, err := newSegment(dir, 16, c)
 	require.NoError(t, err)
-	require.Equal(t, uint64(16), s.nextOffset, s.nextOffset)
+	require.Equal(t, uint64(16), s.baseOffset, s.nextOffset)
 	require.False(t, s.IsMaxed())
 
-	for i := uint64(0); i < uint64(factor); i++ {
+	for i := uint64(0); i < 3; i++ {
 		off, err := s.Append(want)
 		require.NoError(t, err)
-		require.Equal(t, 16 + i, err)
+		require.Equal(t, 16 + i, off)
 
 		got, err := s.Read(off)
 		require.NoError(t, err)
