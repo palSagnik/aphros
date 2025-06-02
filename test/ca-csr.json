@@ -1,0 +1,16 @@
+{
+    "CN": "Aphros CA",
+    "key": {
+        "algo": "RSA",
+        "key": 2048
+    },
+    "names": [
+        {
+            "C": "CA",
+            "L": "ON",
+            "ST": "Toronto",
+            "O": "Aphros Company", 
+            "OU": "CA Services"
+        }
+    ]
+}

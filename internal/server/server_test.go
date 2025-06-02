@@ -6,9 +6,9 @@ import (
 	"os"
 	"context"
 
-	api "github.com/palSagnik/proglog/api/v1"
+	api "github.com/palSagnik/aphros/api/v1"
 	"github.com/stretchr/testify/require"
-	"github.com/palSagnik/proglog/internal/log"
+	"github.com/palSagnik/aphros/internal/log"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

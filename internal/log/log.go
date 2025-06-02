@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	api "github.com/palSagnik/proglog/api/v1"
+	api "github.com/palSagnik/aphros/api/v1"
 )
 
 // This is the implementation of an Append only Log
