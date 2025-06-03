@@ -6,7 +6,7 @@ import (
 	"path"
 
 	"google.golang.org/protobuf/proto"
-	api "github.com/palSagnik/proglog/api/v1"
+	api "github.com/palSagnik/aphros/api/v1"
 )
 
 // Segment wraps index and store to coordinate actions across the two.

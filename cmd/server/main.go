@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/palSagnik/proglog/internal/server"
+	"github.com/palSagnik/aphros/internal/server"
 )
 
 func main() {

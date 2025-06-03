@@ -1,2 +1,2 @@
-# proglog
+# aphros
 
