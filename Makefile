@@ -1,12 +1,16 @@
 CONFIG_PATH=${HOME}/.aphros/
 
+.PHONY: clean-conf
+clean-conf:
+	rm -rf ${CONFIG_PATH}
+
 .PHONY: init
 init:
 	mkdir -p ${CONFIG_PATH}
 
 
 .PHONY: gencert
-gencert:
+gencert: init
 	cfssl gencert \
 		-initca test/ca-csr.json | cfssljson -bare ca
 
@@ -16,6 +20,14 @@ gencert:
 		-config=test/ca-config.json \
 		-profile=server \
 		test/server-csr.json | cfssljson -bare server
+	
+	cfssl gencert \
+        -ca=ca.pem \
+        -ca-key=ca-key.pem \
+        -config=test/ca-config.json \
+        -profile=client \
+        test/client-csr.json | cfssljson -bare client
+
 
 	mv *.pem *.csr ${CONFIG_PATH}
 	

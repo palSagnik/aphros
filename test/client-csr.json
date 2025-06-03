@@ -1,10 +1,11 @@
 {
-    "CN": "Common Name of our CA b950cc7",
-    "key": {
-        "algo": "rsa",
-        "size": 2048
-    },
-    "names": [
+  "CN": "client",
+  "hosts": [""],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
         {
             "C": "IN",
             "L": "BLR",
