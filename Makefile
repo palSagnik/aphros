@@ -1,4 +1,4 @@
-CONFIG_PATH=${HOME}/.aphros/
+CONFIG_PATH=${HOME}/.aphros
 
 .PHONY: clean-conf
 clean-conf:
@@ -12,21 +12,37 @@ init:
 .PHONY: gencert
 gencert: init
 	cfssl gencert \
-		-initca test/ca-csr.json | cfssljson -bare ca
+		-initca test/certs/ca-csr.json | cfssljson -bare ca
 
 	cfssl gencert \
 		-ca=ca.pem \
 		-ca-key=ca-key.pem \
-		-config=test/ca-config.json \
+		-config=test/certs/ca-config.json \
 		-profile=server \
-		test/server-csr.json | cfssljson -bare server
+		test/certs/server-csr.json | cfssljson -bare server
 	
 	cfssl gencert \
         -ca=ca.pem \
         -ca-key=ca-key.pem \
-        -config=test/ca-config.json \
+        -config=test/certs/ca-config.json \
         -profile=client \
-        test/client-csr.json | cfssljson -bare client
+        test/certs/client-csr.json | cfssljson -bare client
+	
+	cfssl gencert \
+        -ca=ca.pem \
+        -ca-key=ca-key.pem \
+        -config=test/certs/ca-config.json \
+        -profile=client \
+        -cn="root" \
+        test/certs/client-csr.json | cfssljson -bare root-client
+
+	cfssl gencert \
+		-ca=ca.pem \
+		-ca-key=ca-key.pem \
+		-config=test/certs/ca-config.json \
+		-profile=client \
+		-cn="nobody" \
+		test/certs/client-csr.json | cfssljson -bare nobody-client
 
 
 	mv *.pem *.csr ${CONFIG_PATH}
@@ -40,6 +56,19 @@ compile:
 		--go-grpc_opt=paths=source_relative \
 		--proto_path=.
 
+$(CONFIG_PATH)/model.conf:
+	cp test/acl/model.conf $(CONFIG_PATH)/model.conf
+
+$(CONFIG_PATH)/policy.csv:
+	cp test/acl/policy.csv $(CONFIG_PATH)/policy.csv
+
+.PHONY: genacl
+genacl: $(CONFIG_PATH)/policy.csv $(CONFIG_PATH)/model.conf
+		echo "ACLs configured"
+
 .PHONY: test
 test:
 	go test -race ./...
+
+
+
