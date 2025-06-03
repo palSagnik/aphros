@@ -43,6 +43,7 @@ func setupTest(t *testing.T, fn func(*Config)) (
 	l, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 
+	// client setup
 	clientTLSConfig, err := config.SetUpTLSConfig(
 		config.TLSConfig{
 			CertFile: config.ClientCertFile,
