@@ -9,6 +9,7 @@ import (
 	api "github.com/palSagnik/aphros/api/v1"
 	"github.com/palSagnik/aphros/internal/config"
 	"github.com/palSagnik/aphros/internal/log"
+	auth "github.com/palSagnik/aphros/internal/auth"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -87,10 +88,13 @@ func setupTest(t *testing.T, fn func(*Config)) (
 
 	clog, err := log.NewLog(dir, log.Config{})
 	require.NoError(t, err)
-
+	
+	authorizer := auth.New(config.ACLModelFile, config.ACLPolicyFile)
 	cfg = &Config{
 		CommitLog: clog,
+		Authorizer: authorizer,
 	}
+	
 	if fn != nil {
 		fn(cfg)
 	}
