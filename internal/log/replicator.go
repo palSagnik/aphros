@@ -9,6 +9,19 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Replicator manages the replication of log entries across multiple servers in a distributed system.
+// It maintains connections to remote servers and coordinates the synchronization of log data
+// between the local server and remote replicas. The Replicator handles connection management,
+// tracks server availability, and ensures data consistency across the cluster.
+//
+// Fields:
+//   - DialOptions: gRPC dial options used when establishing connections to remote servers
+//   - LocalServer: Client interface to interact with the local log server
+//   - logger: Structured logger for debugging and monitoring replication activities
+//   - mu: Mutex protecting concurrent access to the servers map and closed flag
+//   - servers: Map tracking active replication channels for each server address
+//   - closed: Flag indicating whether the replicator has been shut down
+//   - close: Channel used to signal shutdown to all running replication goroutines
 type Replicator struct {
 	DialOptions []grpc.DialOption
 	LocalServer api.LogClient
@@ -41,6 +54,16 @@ func (r *Replicator) Join(name, addr string) error {
 	return nil
 }
 
+// replicate establishes a gRPC connection to the specified address and continuously
+// replicates records from the remote server to the local server. It creates a
+// consume stream to receive records from the remote server and produces them
+// locally. The function runs until it receives a signal on either the replicator's
+// close channel or the provided leave channel. If any errors occur during
+// connection, streaming, or production, they are logged and the function returns.
+//
+// Parameters:
+//   - addr: The address of the remote server to replicate from
+//   - leave: A channel that signals when replication should stop for this address
 func (r *Replicator) replicate(addr string, leave chan struct{}) {
 	cc, err := grpc.NewClient(addr, r.DialOptions...)
 	if err != nil {
