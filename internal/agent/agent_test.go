@@ -15,6 +15,7 @@ import (
 	"github.com/travisjeffery/go-dynaport"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	//"google.golang.org/grpc/status"
 )
 
 func TestAgent(t *testing.T) {
@@ -60,6 +61,7 @@ func TestAgent(t *testing.T) {
 			ACLPolicyFile: config.ACLPolicyFile,
 			ServerTLSConfig: serverTLSConfig,
 			PeerTLSConfig: peerTLSConfig,
+			Bootstrap: i == 0,
 		})
 		require.NoError(t, err)
 
