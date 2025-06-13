@@ -177,6 +177,83 @@ func (l *DistributedLog) Read(offset uint64) (*api.Record, error) {
 	return l.log.Read(offset)
 }
 
+// Join adds a server to the Raft cluster. If a server with the same ID or address
+// already exists in the cluster, it will be removed first before adding the new server.
+// The server is added as a voter with the specified ID and address.
+//
+// Parameters:
+//   - id: The unique identifier for the server to join
+//   - addr: The network address of the server to join
+//
+// Returns an error if:
+//   - Failed to get the current Raft configuration
+//   - Failed to remove an existing conflicting server
+//   - Failed to add the new server as a voter
+func (l *DistributedLog) Join(id, addr string) error {
+	configFuture := l.raft.GetConfiguration()
+	if err := configFuture.Error(); err != nil {
+		return err
+	}
+
+	serverID := raft.ServerID(id)
+	serverAddr := raft.ServerAddress(addr)
+	for _, srv := range configFuture.Configuration().Servers {
+		if srv.ID == serverID || srv.Address == serverAddr {
+			// server has already joined
+			if srv.ID == serverID && srv.Address == serverAddr {
+				return nil
+			}
+
+			// remove the existing server
+			removeFuture := l.raft.RemoveServer(srv.ID, 0, 0)
+			if err := removeFuture.Error(); err != nil {
+				return err
+			}
+		}
+	}
+
+	addFuture := l.raft.AddVoter(serverID, serverAddr, 0, 0)
+	if err := addFuture.Error(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Leave removes a server from the cluster
+// Removing the leader triggers an election
+func (l *DistributedLog) Leave(id string) error  {
+	removeFuture := l.raft.RemoveServer(raft.ServerID(id), 0, 0)
+	if err := removeFuture.Error(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// blocks until the cluster has elected a leader or times out.
+func (l *DistributedLog) WaitForLeader(timeout time.Duration) error {
+	timeoutc := time.After(timeout)
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-timeoutc:
+			return fmt.Errorf("timed out")
+		case <-ticker.C:
+			if _, l := l.raft.LeaderWithID(); l != "" {
+				return nil
+			}
+		}
+	}
+}
+
+func (l *DistributedLog) Close() error {
+	f := l.raft.Shutdown()
+	if err := f.Error(); err != nil {
+		return err
+	}
+	return l.log.Close()
+}
+
 // FINITE STATE MACHINE
 // It has 3 methods
 // - Apply(record *raft.Log)—Raft invokes this method after committing a log entry.
