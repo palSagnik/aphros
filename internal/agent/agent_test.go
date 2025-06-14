@@ -15,7 +15,7 @@ import (
 	"github.com/travisjeffery/go-dynaport"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	//"google.golang.org/grpc/status"
+	"google.golang.org/grpc/status"
 )
 
 func TestAgent(t *testing.T) {
@@ -92,7 +92,7 @@ func TestAgent(t *testing.T) {
 	consumeResponse, err := leaderClient.Consume(
 		context.Background(),
 		&api.ConsumeRequest{
-			Offset: 0,
+			Offset: produceResponse.Offset,
 		},
 	)
 	require.NoError(t, err)
@@ -109,6 +109,17 @@ func TestAgent(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Equal(t, consumeResponse.Record.Value, []byte("hello-world-agent-testing"))
+
+	consumeResponse, err = leaderClient.Consume(
+		context.Background(),
+		&api.ConsumeRequest{Offset: produceResponse.Offset + 1},
+	)
+	require.Nil(t, consumeResponse)
+	require.Error(t, err)
+	
+	got := status.Code(err)
+	want := status.Code(api.ErrOffsetOutOfRange{}.GRPCStatus().Err())
+	require.Equal(t, got, want)
 }
 
 func client(t *testing.T, agent *agent.Agent, tlsConfig *tls.Config)  api.LogClient {

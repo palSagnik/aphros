@@ -120,9 +120,9 @@ func (a *Agent) setupLog() error {
 	}
 
 	if a.Config.Bootstrap {
-		return a.log.WaitForLeader(3 * time.Second)
+		err = a.log.WaitForLeader(3 * time.Second)
 	}
-	return nil
+	return err
 }
 
 // setupServer initializes and starts the gRPC server for the Agent.
@@ -134,29 +134,27 @@ func (a *Agent) setupLog() error {
 // Returns an error if any step in the setup process fails.
 func (a *Agent) setupServer() error {
 	authorizer := auth.New(a.Config.ACLModelFile, a.Config.ACLPolicyFile)
-	serverConfig := &server.Config{
-		CommitLog:  a.log,
-		Authorizer: authorizer,
-	}
+	serverConfig := &server.Config{CommitLog: a.log, Authorizer: authorizer}
 
-	var opts []grpc.ServerOption
+	grpcServerOpts := []grpc.ServerOption{}
 	if a.Config.ServerTLSConfig != nil {
 		creds := credentials.NewTLS(a.Config.ServerTLSConfig)
-		opts = append(opts, grpc.Creds(creds))
+		grpcServerOpts = append(grpcServerOpts, grpc.Creds(creds))
 	}
 
 	var err error
-	a.server, err = server.NewGRPCServer(serverConfig, opts...)
+	a.server, err = server.NewGRPCServer(serverConfig, grpcServerOpts...)
 	if err != nil {
 		return err
 	}
 
 	grpcLn := a.mux.Match(cmux.Any())
-	go func ()  {
+	go func() {
 		if err := a.server.Serve(grpcLn); err != nil {
 			_ = a.Shutdown()
 		}
 	}()
+
 	return err
 }
 
@@ -172,13 +170,12 @@ func (a *Agent) setupMembership() error {
 	}
 
 	a.membership, err = discovery.New(a.log, discovery.Config{
-		NodeName: a.Config.NodeName,
-		BindAddr: a.Config.BindAddr,
-		Tags: map[string]string{
-			"rpc_addr": rpcAddr,
-		},
+		NodeName:       a.Config.NodeName,
+		BindAddr:       a.Config.BindAddr,
+		Tags:           map[string]string{"rpc_addr": rpcAddr},
 		StartJoinAddrs: a.Config.StartJoinAddrs,
 	})
+
 	return err
 }
 

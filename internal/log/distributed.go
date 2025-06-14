@@ -300,7 +300,7 @@ func (l *fsm) applyAppend(b []byte) interface{} {
 // Snapshot
 var _ raft.FSMSnapshot = (*snapshot)(nil)
 
-// Snapshot() returns an FSMSnapshot that represents a point-in-time snapshot of the FSM’s state.
+// Snapshot() returns an FSMSnapshot that represents a point-in-time snapshot of the FSM's state.
 func (f *fsm) Snapshot() (raft.FSMSnapshot, error) {
 	r := f.log.Reader()
 	return &snapshot{reader: r}, nil
@@ -365,7 +365,7 @@ func (f *fsm) Restore(r io.ReadCloser) error {
 }
 
 // LOG STORE
-// using our own log as Raft’s log store,
+// using our own log as Raft's log store,
 // but we need to wrap our log to satisfy the LogStore interface Raft requires.
 var _ raft.LogStore = (*logStore)(nil)
 
@@ -482,7 +482,7 @@ func (s *StreamLayer) Accept() (net.Conn, error) {
 
 	// initialise server tls config
 	if s.serverTLSConfig != nil {
-		conn = tls.Client(conn, s.serverTLSConfig)
+		conn = tls.Server(conn, s.serverTLSConfig)
 	}
 	return conn, nil
 }
