@@ -134,7 +134,11 @@ func (a *Agent) setupLog() error {
 // Returns an error if any step in the setup process fails.
 func (a *Agent) setupServer() error {
 	authorizer := auth.New(a.Config.ACLModelFile, a.Config.ACLPolicyFile)
-	serverConfig := &server.Config{CommitLog: a.log, Authorizer: authorizer}
+	serverConfig := &server.Config{
+		CommitLog: a.log, 
+		Authorizer: authorizer,
+		GetServerer: a.log,
+	}
 
 	grpcServerOpts := []grpc.ServerOption{}
 	if a.Config.ServerTLSConfig != nil {

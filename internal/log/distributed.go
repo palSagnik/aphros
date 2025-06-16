@@ -494,3 +494,22 @@ func (s *StreamLayer) Close() error {
 func (s *StreamLayer) Addr() net.Addr {
 	return s.ln.Addr()
 }
+
+// LOAD BALANCER
+func (l *DistributedLog) GetServers() ([]*api.Server, error) {
+	future := l.raft.GetConfiguration()
+	if err := future.Error(); err != nil {
+		return nil, err
+	}
+
+	var servers []*api.Server
+	for _, server := range future.Configuration().Servers {
+		leaderAddr, _ := l.raft.LeaderWithID()
+		servers = append(servers, &api.Server{
+			Id: string(server.ID),
+			RpcAddr: string(server.Address),
+			IsLeader: leaderAddr == server.Address,
+		})
+	}
+	return servers, nil
+}
