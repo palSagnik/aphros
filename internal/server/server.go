@@ -25,8 +25,9 @@ import (
 )
 
 type Config struct {
-	CommitLog  CommitLog
-	Authorizer Authorizer
+	CommitLog   CommitLog
+	Authorizer  Authorizer
+	GetServerer GetServerer
 }
 
 // we depend on authorizer interface so that we can switch out any authorization implementation
@@ -63,7 +64,7 @@ func NewGRPCServer(config *Config, opts ...grpc.ServerOption) (*grpc.Server, err
 	// tradeoff here is there is a possibility of missing out on some important reqs
 	halfSampler := trace.ProbabilitySampler(0.5)
 	trace.ApplyConfig(trace.Config{
-		DefaultSampler: func (p trace.SamplingParameters) trace.SamplingDecision {
+		DefaultSampler: func(p trace.SamplingParameters) trace.SamplingDecision {
 			if strings.Contains(p.Name, "Produce") {
 				return trace.SamplingDecision{Sample: true}
 			}
@@ -73,17 +74,17 @@ func NewGRPCServer(config *Config, opts ...grpc.ServerOption) (*grpc.Server, err
 	})
 
 	opts = append(opts, grpc.StreamInterceptor(
-			grpc_middleware.ChainStreamServer(
-				grpc_ctxtags.StreamServerInterceptor(),
-				grpc_zap.StreamServerInterceptor(logger, zapOpts...),
-				grpc_auth.StreamServerInterceptor(authenticate)),
-			),
-			grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-				grpc_ctxtags.UnaryServerInterceptor(),
-        		grpc_zap.UnaryServerInterceptor(logger, zapOpts...),
-        		grpc_auth.UnaryServerInterceptor(authenticate),
-			)),
-			grpc.StatsHandler(&ocgrpc.ServerHandler{}),	
+		grpc_middleware.ChainStreamServer(
+			grpc_ctxtags.StreamServerInterceptor(),
+			grpc_zap.StreamServerInterceptor(logger, zapOpts...),
+			grpc_auth.StreamServerInterceptor(authenticate)),
+	),
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			grpc_ctxtags.UnaryServerInterceptor(),
+			grpc_zap.UnaryServerInterceptor(logger, zapOpts...),
+			grpc_auth.UnaryServerInterceptor(authenticate),
+		)),
+		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
 	)
 
 	gsrv := grpc.NewServer(opts...)
@@ -187,6 +188,19 @@ func (s *grpcServer) ConsumeStream(req *api.ConsumeRequest, stream api.Log_Consu
 			req.Offset++
 		}
 	}
+}
+
+func (s *grpcServer) GetServers(ctx context.Context, req *api.GetServersRequest) (*api.GetServersResponse, error) {
+	servers, err := s.GetServerer.GetServers()
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.GetServersResponse{Servers: servers}, err
+}
+
+type GetServerer interface {
+	GetServers() ([]*api.Server, error)
 }
 
 func authenticate(ctx context.Context) (context.Context, error) {
