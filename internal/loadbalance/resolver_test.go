@@ -2,6 +2,7 @@ package loadbalance_test
 
 import (
 	"net"
+	"net/url"
 	"testing"
 
 	api "github.com/palSagnik/aphros/api/v1"
@@ -52,17 +53,14 @@ func TestResolver(t *testing.T) {
 		DialCreds: clientCreds,
 	}
 	r := &loadbalance.Resolver{}
-	_, err = r.Build(resolver.Target{}, conn, opts)
+	_, err = r.Build(resolver.Target{URL: url.URL{Host: l.Addr().String()}}, conn, opts)
 	require.NoError(t, err)
 
 	wantState := resolver.State{
-		Addresses: []resolver.Address{{
-			Addr:       "localhost:9001",
-			Attributes: attributes.New("is_leader", true),
-		}, {
-			Addr:       "localhost:9002",
-			Attributes: attributes.New("is_leader", false),
-		}},
+		Addresses: []resolver.Address{
+			{Addr:  "localhost:9001", Attributes: attributes.New("is_leader", true)}, 
+			{Addr:  "localhost:9002", Attributes: attributes.New("is_leader", false)},
+		},
 	}
 	require.Equal(t, wantState, conn.state)
 
@@ -76,14 +74,10 @@ type getServers struct{}
 
 // getServers implements GetServerers, whose job is to return a known server set for the resolver to find.
 func (s *getServers) GetServers() ([]*api.Server, error) {
-	return []*api.Server{{
-		Id: "leader",
-		RpcAddr: "localhost:9001",
-		IsLeader: true,
-	}, {
-		Id: "follower",
-		RpcAddr: "localhost:9002",
-	}}, nil
+	return []*api.Server{
+		{Id: "leader",	RpcAddr: "localhost:9001", IsLeader: true}, 
+		{Id: "follower", RpcAddr: "localhost:9002"},
+	}, nil
 }
 
 type clientConn struct {
@@ -91,8 +85,9 @@ type clientConn struct {
 	state resolver.State
 }
 
-func (c *clientConn) UpdateState(state resolver.State) { 
+func (c *clientConn) UpdateState(state resolver.State) error { 
 	c.state = state
+	return nil
 }
 
 func (c *clientConn) ReportError(err error) {}

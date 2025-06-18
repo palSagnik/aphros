@@ -41,7 +41,7 @@ func (r *Resolver) Build(target resolver.Target, cc resolver.ClientConn, opts re
 	r.serviceConfig = r.clientConn.ParseServiceConfig(fmt.Sprintf(`{"loadBalancingConfig":[{"%s":{}}]}`, Name))
 
 	var err error
-	r.resolverConn, err = grpc.NewClient(target.Endpoint(), dialOpts...)
+	r.resolverConn, err = grpc.NewClient(target.URL.Host, dialOpts...)
 	if err != nil {
 		return nil, err
 	}
