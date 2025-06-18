@@ -11,6 +11,7 @@ import (
 	api "github.com/palSagnik/aphros/api/v1"
 	"github.com/palSagnik/aphros/internal/agent"
 	"github.com/palSagnik/aphros/internal/config"
+	"github.com/palSagnik/aphros/internal/loadbalance"
 	"github.com/stretchr/testify/require"
 	"github.com/travisjeffery/go-dynaport"
 	"google.golang.org/grpc"
@@ -89,6 +90,8 @@ func TestAgent(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	time.Sleep(3 * time.Second)  // wait until replication has finished
+	
 	consumeResponse, err := leaderClient.Consume(
 		context.Background(),
 		&api.ConsumeRequest{
@@ -98,8 +101,6 @@ func TestAgent(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, consumeResponse.Record.Value, []byte("hello-world-agent-testing"))
 
-	// wait until replication has finished
-	time.Sleep(3 * time.Second)
 	followerClient := client(t, agents[1], peerTLSConfig)
 	consumeResponse, err = followerClient.Consume(
 		context.Background(),
@@ -130,7 +131,7 @@ func client(t *testing.T, agent *agent.Agent, tlsConfig *tls.Config)  api.LogCli
 	rpcAddr, err := agent.Config.RPCAddr()
 	require.NoError(t, err)
 
-	conn, err := grpc.NewClient(rpcAddr, opts...)
+	conn, err := grpc.NewClient(fmt.Sprintf("%s://%s", loadbalance.Name, rpcAddr), opts...)
 	require.NoError(t, err)
 
 	client := api.NewLogClient(conn)
