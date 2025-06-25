@@ -1,0 +1,9 @@
+# Default values for aphros.
+image:
+  repository: github.com/palsagnik/aphros
+  tag: 0.0.4
+  pullPolicy: IfNotPresent
+serfPort: 8401
+rpcPort: 8400
+replicas: 3
+storage: 1Gi

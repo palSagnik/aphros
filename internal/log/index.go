@@ -99,9 +99,8 @@ func (i *index) Read(in int64) (out uint32, pos uint64, err error) {
 
 func (i *index) Write(off uint32, pos uint64) error {
 	
-	// Size of memory less than current index size + 1 additional entry
-	// Not possible to write, return EOF
-	if uint64(len(i.mmap)) < i.size + entryWidth {
+	// Check if index file is not full
+	if i.IsMaxed() {
 		return io.EOF
 	}
 	encoding.PutUint32(i.mmap[i.size : i.size + offsetWidth], off)
@@ -114,3 +113,6 @@ func (i *index) Name() string {
 	return i.file.Name()
 }
 
+func (i *index) IsMaxed() bool {
+	return uint64(len(i.mmap)) < i.size+entryWidth
+}

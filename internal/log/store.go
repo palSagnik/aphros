@@ -3,6 +3,7 @@ package log
 import (
 	"bufio"
 	"encoding/binary"
+	"fmt"
 	"os"
 	"sync"
 )
@@ -71,18 +72,23 @@ func (s *store) Read(position uint64) ([]byte, error) {
 
 	// Flushing the buffer
 	if err := s.buf.Flush(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to flush buffer before read: %w", err)
 	}
 
 	// Get the number of bytes to read in size buffer
 	size := make([]byte, lenWidth)
 	if _, err := s.File.ReadAt(size, int64(position)); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read record size at position %d: %w", position, err)
 	}
 
-	b := make([]byte, encoding.Uint64(size))
+	recordSize := encoding.Uint64(size)
+	if recordSize == 0 {
+		return nil, fmt.Errorf("invalid record size 0 at position %d", position)
+	}
+
+	b := make([]byte, recordSize)
 	if _, err := s.File.ReadAt(b, int64(position + lenWidth)); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read record data of size %d at position %d: %w", recordSize, position+lenWidth, err)
 	}
 	return b, nil
 }

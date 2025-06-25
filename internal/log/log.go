@@ -105,18 +105,27 @@ func (l *Log) setup() error {
 // segment has reached its maximum capacity. The method is thread-safe and returns
 // the offset of the appended record or an error if the operation fails.
 func (l *Log) Append(record *api.Record) (uint64, error) {
+	highestOffset, err := l.HighestOffset()
+	if err != nil {
+		return 0, err
+	}
+	
 	l.mu.Lock()
 	defer l.mu.Unlock()
+
+	// If segment is maxed
+	if l.activeSegment.IsMaxed() {
+		err = l.newSegment(highestOffset + 1)
+		if err != nil {
+			return 0, err
+		}
+	}
 
 	off, err := l.activeSegment.Append(record)
 	if err != nil {
 		return 0, err
 	}
 
-	// if segment is maxed out
-	if l.activeSegment.IsMaxed() {
-		err = l.newSegment(off + 1)
-	}
 	return off, err
 }
 
