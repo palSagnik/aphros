@@ -1,4 +1,9 @@
 CONFIG_PATH=${HOME}/.aphros
+TAG ?= 0.0.4
+
+.PHONY: build-docker
+build-docker:
+	docker build -t github.com/palsagnik/aphros:$(TAG) .
 
 .PHONY: clean-conf
 clean-conf:
@@ -7,7 +12,6 @@ clean-conf:
 .PHONY: init
 init:
 	mkdir -p ${CONFIG_PATH}
-
 
 .PHONY: gencert
 gencert: init
@@ -70,5 +74,10 @@ genacl: $(CONFIG_PATH)/policy.csv $(CONFIG_PATH)/model.conf
 test:
 	go test -race ./...
 
+.PHONY: clean-chart
+clean-chart:
+	helm uninstall aphros
 
-
+.PHONY: chart
+chart:
+	helm install aphros deploy/aphros
