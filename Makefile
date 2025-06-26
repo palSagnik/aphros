@@ -77,7 +77,12 @@ test:
 .PHONY: clean-chart
 clean-chart:
 	helm uninstall aphros
+	kubectl delete pvc datadir-aphros-0 datadir-aphros-1 datadir-aphros-2
 
 .PHONY: chart
 chart:
 	helm install aphros deploy/aphros
+
+.PHONY: pods
+pods:
+	kubectl get pods
