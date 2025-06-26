@@ -1,0 +1,121 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "aphros.fullname" . }}-jumpserver
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "aphros.labels" . | nindent 4 }}
+    app.kubernetes.io/component: jumpserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "aphros.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: jumpserver
+  template:
+    metadata:
+      labels:
+        {{- include "aphros.labels" . | nindent 8 }}
+        app.kubernetes.io/component: jumpserver
+    spec:
+      containers:
+      - name: socat-jumpserver
+        image: alpine/socat:latest
+        ports:
+        - containerPort: 8400
+          name: rpc-proxy
+        - containerPort: 8401
+          name: serf-proxy
+        command:
+          - /bin/sh
+          - -c
+          - |
+            # Install required tools
+            apk add --no-cache curl netcat-openbsd
+
+            # Function to start socat proxies
+            start_proxies() {
+              echo "Starting socat jump server..."
+              
+              # RPC port proxy - direct connection to leader for gRPC compatibility
+              # gRPC requires persistent connections, so we connect to the leader instance
+              echo "Starting RPC proxy to leader instance..."
+              socat TCP-LISTEN:8400,fork,reuseaddr \
+                TCP:{{ include "aphros.fullname" . }}-0.{{ include "aphros.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.rpcPort }} &
+              
+              # Serf port proxy - forwards to leader instance  
+              echo "Starting Serf proxy to leader instance..."
+              socat TCP-LISTEN:8401,fork,reuseaddr \
+                TCP:{{ include "aphros.fullname" . }}-0.{{ include "aphros.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.serfPort }} &
+              
+              wait
+            }
+
+            # Health check function
+            health_check() {
+              echo "Checking backend service connectivity..."
+              TARGET="{{ include "aphros.fullname" . }}-0.{{ include "aphros.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local"
+              
+              echo "Testing RPC port connectivity..."
+              if nc -z $TARGET {{ .Values.rpcPort }}; then
+                echo "✓ $TARGET:{{ .Values.rpcPort }} is reachable"
+              else
+                echo "✗ $TARGET:{{ .Values.rpcPort }} is not reachable"
+                echo "Warning: RPC service may not be ready yet"
+              fi
+              
+              echo "Testing Serf port connectivity..."
+              if nc -z $TARGET {{ .Values.serfPort }}; then
+                echo "✓ $TARGET:{{ .Values.serfPort }} is reachable"
+              else
+                echo "✗ $TARGET:{{ .Values.serfPort }} is not reachable"
+                echo "Warning: Serf service may not be ready yet"
+              fi
+            }
+
+            echo "=== Socat Jump Server Starting ==="
+            echo "Performing initial health check..."
+            health_check
+
+            echo "Starting proxy services..."
+            start_proxies
+        readinessProbe:
+          tcpSocket:
+            port: 8400
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 8400
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "aphros.fullname" . }}-jumpserver
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "aphros.labels" . | nindent 4 }}
+    app.kubernetes.io/component: jumpserver
+spec:
+  type: ClusterIP
+  ports:
+  - name: rpc-proxy
+    port: 8400
+    targetPort: 8400
+    protocol: TCP
+  - name: serf-proxy
+    port: 8401
+    targetPort: 8401
+    protocol: TCP
+  selector:
+    {{- include "aphros.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: jumpserver 
