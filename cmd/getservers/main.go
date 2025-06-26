@@ -30,7 +30,7 @@ func main() {
 	
 	fmt.Println("servers:")
 	for _, server := range res.Servers {
-		fmt.Printf("- id: %s, rpc_addr: %s, is_leader: %v\n",
-			server.Id, server.RpcAddr, server.IsLeader)
+		fmt.Printf("- id: %s, rpc_addr: %s\n",
+			server.Id, server.RpcAddr)
 	}
 }
