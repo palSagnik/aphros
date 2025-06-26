@@ -2,6 +2,95 @@
 
 A distributed log service with Kubernetes deployment support.
 
+## Getting Started
+
+This project uses a Makefile for easy development and deployment. Here's how to get up and running:
+
+### Prerequisites
+
+- **Go 1.23+** - For building and testing the application
+- **Docker** - For containerizing the application
+- **Kubernetes cluster** - For deployment (minikube, kind, or cloud cluster)
+- **kubectl** - Configured to access your cluster
+- **Helm 3** - For managing Kubernetes deployments
+
+### Development Workflow
+
+1. **Build and test the application:**
+
+   ```bash
+   # Run tests
+   make test
+
+   # Compile protobuf definitions
+   make compile
+
+   # Build Docker image
+   make build-docker
+   ```
+
+2. **Set up certificates (for secure communication):**
+
+   ```bash
+   # Generate TLS certificates
+   make gencert
+
+   # Set up ACL configuration
+   make genacl
+   ```
+
+3. **Deploy to Kubernetes:**
+
+   ```bash
+   # Deploy the main application
+   make chart
+
+   # Check pod status
+   make pods
+   ```
+
+4. **Access your services** (using the jump server):
+
+   ```bash
+   # Deploy jump server for port forwarding
+   make jumpserver-deploy
+
+   # Start port forwarding
+   make jumpserver-start
+
+   # Test connectivity
+   make jumpserver-test
+   ```
+
+### Quick Commands Reference
+
+```bash
+# View all available commands
+make help
+
+# Jump server specific help
+make jumpserver-help
+
+# Clean up everything
+make clean-chart     # Remove Kubernetes resources
+make clean-conf      # Remove local configuration
+```
+
+### Environment Customization
+
+You can customize the deployment by setting environment variables:
+
+```bash
+# Deploy to different namespace
+make chart NAMESPACE=production
+
+# Use different image tag
+make build-docker TAG=v1.2.3
+
+# Custom jump server configuration
+make jumpserver-start LOCAL_PORT_RPC=9400 NAMESPACE=staging
+```
+
 ## Socat Jump Server
 
 This project includes a socat-based jump server solution to address kubectl port-forward limitations, specifically the issues mentioned in:
