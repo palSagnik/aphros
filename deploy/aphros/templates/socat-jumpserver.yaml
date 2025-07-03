@@ -58,17 +58,17 @@ spec:
               
               echo "Testing RPC port connectivity..."
               if nc -z $TARGET {{ .Values.rpcPort }}; then
-                echo "✓ $TARGET:{{ .Values.rpcPort }} is reachable"
+                echo "$TARGET:{{ .Values.rpcPort }} is reachable"
               else
-                echo "✗ $TARGET:{{ .Values.rpcPort }} is not reachable"
+                echo "$TARGET:{{ .Values.rpcPort }} is not reachable"
                 echo "Warning: RPC service may not be ready yet"
               fi
               
               echo "Testing Serf port connectivity..."
               if nc -z $TARGET {{ .Values.serfPort }}; then
-                echo "✓ $TARGET:{{ .Values.serfPort }} is reachable"
+                echo "$TARGET:{{ .Values.serfPort }} is reachable"
               else
-                echo "✗ $TARGET:{{ .Values.serfPort }} is not reachable"
+                echo "$TARGET:{{ .Values.serfPort }} is not reachable"
                 echo "Warning: Serf service may not be ready yet"
               fi
             }
