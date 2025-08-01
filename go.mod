@@ -17,12 +17,11 @@ require (
 	github.com/tysonmote/gommap v0.0.3
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.18.1
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a
-	google.golang.org/grpc v1.72.2
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250528174236-200df99c418a
+	google.golang.org/grpc v1.74.2
 )
 
 require (
-	cloud.google.com/go/compute/metadata v0.7.0 // indirect
 	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/fatih/color v1.13.0 // indirect
@@ -31,7 +30,6 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-hclog v1.6.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
@@ -58,10 +56,10 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/mod v0.17.0 // indirect
-	golang.org/x/net v0.35.0 // indirect
-	golang.org/x/sync v0.11.0 // indirect
+	golang.org/x/net v0.40.0 // indirect
+	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
+	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 )
 
